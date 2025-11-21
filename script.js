@@ -1,114 +1,111 @@
 // ===============================
-// CONFIGURAÇÃO DA DATA FINAL
+// CONFIGURAÇÃO DA DATA
 // ===============================
 const dataAlvo = new Date();
-dataAlvo.setHours(15, 0, 0, 0); // 15:00 em ponto
+dataAlvo.setHours(15, 0, 0, 0);
 
-// ===============================
 // ELEMENTOS
-// ===============================
-const contagemEl = document.getElementById("contador");
-const presenteEl = document.getElementById("presentebox");
-const telaPretaEl = document.getElementById("blackout");
-const dialogoEl = document.getElementById("dialogobox");
-const textoDialogoEl = document.getElementById("text");
+const contador = document.getElementById("contador");
+const blackout = document.getElementById("blackout");
+const dialogobox = document.getElementById("dialogobox");
+const text = document.getElementById("text");
+const telaInicial = document.getElementById("telaInicial");
 
-// Som do Tenna enviado por você
-const somTenna = new Audio("Tenna.mp3");
+// Áudios
+const musica = new Audio("Glacier.mp3");
+musica.loop = true;
+
+const tenna = new Audio("Tenna.mp3");
+
+// LIBERAR ÁUDIO NO CELULAR
+document.addEventListener("touchstart", () => {
+    musica.play().catch(()=>{});
+}, { once: true });
 
 // ===============================
-// SOM DE TIC A CADA SEGUNDO
+// TELA INICIAL
 // ===============================
-function tocarTic() {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+function iniciar() {
+    telaInicial.style.display = "none";
+    contador.style.display = "block";
+    musica.play();
+}
+
+// ===============================
+// TICK DE RELOGIO
+// ===============================
+function tic() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
 
     osc.type = "square";
     osc.frequency.value = 800;
 
-    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.09);
 
     osc.connect(gain);
-    gain.connect(audioCtx.destination);
+    gain.connect(ctx.destination);
 
     osc.start();
-    osc.stop(audioCtx.currentTime + 0.1);
+    osc.stop(ctx.currentTime + 0.1);
 }
 
 // ===============================
 // CONTADOR
 // ===============================
-function atualizarContagem() {
+function atualizar() {
     const agora = new Date();
     let dif = dataAlvo - agora;
 
     if (dif <= 0) {
-        iniciarSurpresa();
+        iniciarFinal();
         return;
     }
 
-    const h = Math.floor(dif / (1000 * 60 * 60));
-    dif %= (1000 * 60 * 60);
-    const m = Math.floor(dif / (1000 * 60));
-    dif %= (1000 * 60);
-    const s = Math.floor(dif / 1000);
+    const h = String(Math.floor(dif / 3600000)).padStart(2,"0");
+    dif %= 3600000;
+    const m = String(Math.floor(dif / 60000)).padStart(2,"0");
+    dif %= 60000;
+    const s = String(Math.floor(dif / 1000)).padStart(2,"0");
 
-    contagemEl.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    contador.textContent = `${h}:${m}:${s}`;
+    tic();
 }
-
-// Executa contador + tic
-setInterval(() => {
-    atualizarContagem();
-    tocarTic();
-}, 1000);
+setInterval(atualizar, 1000);
 
 // ===============================
-// SEQUÊNCIA FINAL (surpresa)
+// FINAL
 // ===============================
-function iniciarSurpresa() {
-    contagemEl.style.display = "none";
+function iniciarFinal() {
+    musica.pause();
+    musica.currentTime = 0;
 
-    // Remove o intervalo do contador
-    clearInterval();
+    blackout.style.opacity = 1;
 
-    // Caixa abre (caso tenha animação)
-    presenteEl.classList.add("open");
-
-    // Espera 2s e escurece
     setTimeout(() => {
-        telaPretaEl.style.opacity = "1";
-
-        setTimeout(() => {
-            iniciarDialogo();
-        }, 1500);
-
+        iniciarDialogo();
     }, 2000);
 }
 
-// ===============================
-// DIÁLOGO ESTILO DELTARUNE
-// ===============================
+// TEXTO DO TENNA
 const mensagem = "bom meu aniversariante preferido, aqui estar seu magnífico presente do fundo do poço";
-
 let index = 0;
 
 function iniciarDialogo() {
-    dialogoEl.style.display = "block";
-    textoDialogoEl.textContent = "";
+    dialogobox.style.display = "block";
     escrever();
 }
 
 function escrever() {
     if (index < mensagem.length) {
-        textoDialogoEl.textContent += mensagem[index];
+        text.textContent += mensagem[index];
 
-        // Som do Tenna a cada letra
-        somTenna.currentTime = 0;
-        somTenna.play();
+        tenna.currentTime = 0;
+        tenna.play();
 
         index++;
-        setTimeout(escrever, 65);
+        setTimeout(escrever, 70);
     }
-}
+    }
