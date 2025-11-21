@@ -1,379 +1,94 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Surpresa — Contagem</title>
-<style>
-  :root{
-    --bg:#ffdee9;
-    --text:#222;
-    --accent:#ff0066;
-  }
-  html,body{
-    height:100%;
-    margin:0;
-    font-family: "Arial", "Helvetica", sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contagem para o aniversário 🎉</title>
+    <style>
+        body {
+            background-color: #ffd6e8;
+            margin: 0;
+            overflow: hidden;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
 
-  .wrap{
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:flex-start;
-    padding:28px 18px;
-    box-sizing:border-box;
-  }
+        h1 {
+            margin-top: 20px;
+            color: #ff0066;
+            font-size: 26px;
+        }
 
-  h1{
-    margin:6px 0 12px;
-    font-size:28px;
-    color:var(--accent);
-    text-shadow:0 1px 0 rgba(0,0,0,0.12);
-  }
+        #timer {
+            font-size: 40px;
+            font-weight: bold;
+            color: #ff0066;
+            margin-top: 10px;
+        }
 
-  #count{
-    font-size:44px;
-    font-weight:700;
-    color:#111;
-    letter-spacing:1px;
-  }
+        .dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: fall linear infinite;
+        }
 
-  /* gift (kept hidden while showing speech bubble later if you want) */
-  #gift {
-    margin-top:28px;
-    width:220px;
-    transition:transform .6s ease;
-    display:block;
-  }
-
-  /* speech bubble style (Undertale-ish) */
-  .overlay {
-    position:fixed;
-    inset:0;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:9999;
-  }
-
-  .bubble {
-    max-width:85%;
-    background:#fff;
-    color:#000;
-    border:6px solid #111;
-    border-radius:12px;
-    padding:22px;
-    box-shadow: 12px 12px 0 rgba(0,0,0,0.15);
-    font-family: "Lucida Console", Monaco, monospace;
-    font-size:18px;
-    line-height:1.5;
-    text-align:left;
-    position:relative;
-  }
-
-  /* little pointer like undertale */
-  .bubble:after{
-    content:"";
-    position:absolute;
-    bottom:-20px;
-    left:32px;
-    width:0;height:0;
-    border-left:12px solid transparent;
-    border-right:12px solid transparent;
-    border-top:20px solid #fff;
-    transform:translateY(0);
-    z-index:10;
-  }
-  .bubble:before{
-    content:"";
-    position:absolute;
-    bottom:-28px;
-    left:28px;
-    width:0;height:0;
-    border-left:15px solid transparent;
-    border-right:15px solid transparent;
-    border-top:26px solid #111;
-    z-index:9;
-  }
-
-  .bubble .text {
-    white-space:pre-wrap;
-  }
-
-  /* black fullscreen after end */
-  .black {
-    position:fixed;
-    inset:0;
-    background:#000;
-    z-index:999;
-    display:none;
-  }
-
-  /* small control button to enable audio if blocked */
-  #soundEnable {
-    margin-top:18px;
-    padding:8px 12px;
-    font-size:14px;
-    border-radius:8px;
-    border:none;
-    background:#111;
-    color:#fff;
-    cursor:pointer;
-  }
-
-  @media (min-width:900px){
-    .bubble{ font-size:20px; }
-    #count{ font-size:64px; }
-  }
-</style>
+        @keyframes fall {
+            from { transform: translateY(-10vh); }
+            to { transform: translateY(110vh); }
+        }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Contagem para a surpresa 🎉</h1>
-    <div id="count">Carregando...</div>
 
-    <!-- opcional: imagem do presente (mantida como fallback) -->
-    <img id="gift" src="https://i.imgur.com/GD9ZkqD.gif" alt="presente" style="display:none">
+    <h1>🎉 Contagem para o aniversário 🎉</h1>
+    <h1>🎁 SURPRESA!!! 🎉</h1>
 
-    <!-- audio Tenna já no repo (arquivo que você subiu). Usamos clones para tocar muitas vezes -->
-    <audio id="tennaSrc" src="./Tenna.mp3" preload="auto"></audio>
+    <div id="timer">00:00</div>
 
-    <!-- control to allow user to enable sound if autoplay blocked -->
-    <button id="soundEnable">Ativar som (se necessário)</button>
-  </div>
+    <audio id="audio" src="Tenna.mp3"></audio>
 
-  <!-- black full screen -->
-  <div id="black" class="black"></div>
+    <script>
+        function startCountdown() {
+            const target = new Date();
+            target.setHours(15, 0, 0, 0); // <<< HORÁRIO AQUI
 
-  <!-- speech bubble overlay -->
-  <div id="overlay" class="overlay" aria-hidden="true">
-    <div class="bubble">
-      <div id="bubbleText" class="text"></div>
-    </div>
-  </div>
+            const timer = setInterval(() => {
+                const now = new Date();
+                let diff = target - now;
 
-<script>
-/*
-  Lógica:
-  - target: hoje às 15:00 local; se já passou, soma 1 dia
-  - tic: som gerado via WebAudio cada segundo (melhora compatibilidade mobile)
-  - quando chegar a zero:
-      -> para tic, escurece tela, mostra balão, digita palavra por palavra
-      -> para cada palavra toca Tenna.mp3
-  - botão "Ativar som" chama resume do áudio / permite WebAudio contexto
-*/
+                if (diff <= 0) {
+                    document.getElementById('timer').innerHTML = "🎉 CHEGOU!!! 🎉";
+                    document.getElementById("audio").play();
+                    clearInterval(timer);
+                    return;
+                }
 
-(function(){
-  // --- CONFIGURAÇÃO: horário alvo (15:00 local) ---
-  function getTargetTodayAt(hour,minute,second){
-    const now = new Date();
-    const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, second, 0);
-    if (now > target) {
-      // se já passou, soma 1 dia
-      target.setDate(target.getDate() + 1);
-    }
-    return target;
-  }
+                let min = Math.floor((diff / 1000 / 60) % 60);
+                let sec = Math.floor((diff / 1000) % 60);
 
-  const target = getTargetTodayAt(15,0,0); // 15:00:00
-  const countEl = document.getElementById('count');
-  const giftEl = document.getElementById('gift');
-  const overlay = document.getElementById('overlay');
-  const bubbleText = document.getElementById('bubbleText');
-  const black = document.getElementById('black');
-  const soundEnableBtn = document.getElementById('soundEnable');
+                document.getElementById('timer').innerHTML =
+                    String(min).padStart(2, '0') + ":" +
+                    String(sec).padStart(2, '0');
 
-  // speech text (exatamente como pediu)
-  const speech = "bom meu aniversariante preferido, aqui estar seu magnífico presente do fundo do poço";
+            }, 1000);
+        }
 
-  // Tenna audio element (the source present in repo)
-  const tennaSrc = document.getElementById('tennaSrc');
+        function createDots() {
+            for (let i = 0; i < 40; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                dot.style.background = "#" + Math.floor(Math.random()*16777215).toString(16);
+                dot.style.left = Math.random() * 100 + "vw";
+                dot.style.animationDuration = (3 + Math.random() * 5) + "s";
+                document.body.appendChild(dot);
+            }
+        }
 
-  // WebAudio context for generating tick sound (works without external file)
-  let audioCtx = null;
-  let tickIntervalId = null;
-  let tickEnabled = false;
+        createDots();
+        startCountdown();
+    </script>
 
-  function ensureAudioCtx(){
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-  }
-
-  function playTick(){
-    try{
-      ensureAudioCtx();
-      // short click using oscillator
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.type = 'square';
-      o.frequency.value = 1000; // frequency of tick
-      g.gain.value = 0.0001;
-      o.connect(g);
-      g.connect(audioCtx.destination);
-      const now = audioCtx.currentTime;
-      g.gain.setValueAtTime(0.0001, now);
-      g.gain.linearRampToValueAtTime(0.06, now+0.001);
-      g.gain.linearRampToValueAtTime(0.0001, now+0.09);
-      o.start(now);
-      o.stop(now+0.11);
-      tickEnabled = true;
-    }catch(e){
-      // if audio context failed, ignore
-      // console.warn('tick fail', e);
-    }
-  }
-
-  function startTicking(){
-    if (tickIntervalId) return;
-    // try to play once immediately
-    playTick();
-    tickIntervalId = setInterval(playTick, 1000);
-  }
-
-  function stopTicking(){
-    if (tickIntervalId){
-      clearInterval(tickIntervalId);
-      tickIntervalId = null;
-    }
-  }
-
-  // play Tenna sound once (returns promise)
-  function playTenna(){
-    return new Promise((resolve) => {
-      // clone node to allow quick replays without waiting end of previous
-      const a = tennaSrc.cloneNode(true);
-      a.volume = 1.0;
-      // try to play
-      const p = a.play();
-      if (p && p.then) {
-        p.then(()=> {
-          // ensure short delay then resolve (we don't wait whole file necessarily)
-          setTimeout(resolve, 240);
-        }).catch(()=> {
-          // cannot autoplay — resolve anyway
-          resolve();
-        });
-      } else {
-        // older browsers
-        setTimeout(resolve, 240);
-      }
-    });
-  }
-
-  // show the overlay bubble and type words one by one, playing Tenna per word
-  async function showSpeechAndPlay(){
-    // hide other UI
-    giftEl.style.display = 'none';
-    // black background then bubble
-    black.style.display = 'block';
-    overlay.style.display = 'flex';
-    overlay.setAttribute('aria-hidden','false');
-    bubbleText.textContent = '';
-
-    // split into words, keep punctuation attached
-    const words = speech.split(' ');
-    for (let i=0;i<words.length;i++){
-      const w = words[i];
-      // append with a space (except first)
-      if (bubbleText.textContent.length > 0) bubbleText.textContent += ' ';
-      // add the word (with small per-letter animation can be added but we do word-by-word)
-      bubbleText.textContent += w;
-      // play Tenna
-      await playTenna();
-      // small pause between words
-      await new Promise(r=>setTimeout(r, 180));
-    }
-  }
-
-  // countdown update loop
-  function updateLoop(){
-    const now = new Date();
-    let diff = target - now;
-    if (diff <= 0){
-      // reached
-      countEl.textContent = "🎁 SURPRESA!!!";
-      // stop ticking
-      stopTicking();
-      // quickly transition to black and bubble
-      // small fade: hide normal content, show black and bubble
-      // show gift for a beat then replaced by bubble
-      giftEl.style.display = 'none';
-      setTimeout(()=> {
-        showSpeechAndPlay();
-      }, 300);
-      // stop interval updates
-      return;
-    }
-
-    const days = Math.floor(diff / (1000*60*60*24));
-    const hours = Math.floor((diff / (1000*60*60)) % 24);
-    const mins = Math.floor((diff / (1000*60)) % 60);
-    const secs = Math.floor((diff / 1000) % 60);
-
-    // format
-    const pad = (n) => String(n).padStart(2,'0');
-    let text = '';
-    if (days>0) text += days + 'd ';
-    text += pad(hours) + ':' + pad(mins) + ':' + pad(secs);
-    countEl.textContent = text;
-  }
-
-  // main start
-  // try to start ticking and audio on user interaction or auto
-  function attemptStartAudio(){
-    // start webaudio context (some browsers require user gesture)
-    try{
-      ensureAudioCtx();
-      if (audioCtx.state === 'suspended' && audioCtx.resume) {
-        audioCtx.resume();
-      }
-      startTicking();
-    } catch(e) { /* ignore */ }
-
-    // also try to unlock Tenna audio element by playing a silent short sound via clone
-    try{
-      const t = tennaSrc.cloneNode(true);
-      t.volume = 0;
-      const p = t.play();
-      if (p && p.then) p.then(()=>{ t.pause(); }).catch(()=>{});
-    } catch(e){}
-  }
-
-  // attach button to enable sound manually
-  soundEnableBtn.addEventListener('click', function(){
-    attemptStartAudio();
-    // hide the button after use
-    soundEnableBtn.style.display = 'none';
-  });
-
-  // also try to auto-start everything (may be blocked)
-  window.addEventListener('load', function(){
-    // show gift initially (optional)
-    giftEl.style.display = 'block';
-    // try to start ticks (may be blocked)
-    try { attemptStartAudio(); } catch(e) {}
-    // first update
-    updateLoop();
-    // update every 500ms to be responsive
-    const iv = setInterval(updateLoop, 500);
-  }, false);
-
-  // touch to enable (for mobile quick enable)
-  window.addEventListener('touchstart', function enableOnTouch(){
-    attemptStartAudio();
-    // hide the button as we've already had an interaction
-    soundEnableBtn.style.display = 'none';
-    window.removeEventListener('touchstart', enableOnTouch);
-  }, {passive:true});
-
-})();
-</script>
 </body>
-    </html>
+</html>
