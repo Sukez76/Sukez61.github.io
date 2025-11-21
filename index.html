@@ -1,10 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Sukez61</title>
+<meta charset="UTF-8">
+<title>Feliz Aniversário!</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        text-align: center;
+        background: #ffbad2;
+        font-family: Arial, sans-serif;
+        color: #fff;
+    }
+
+    h1 {
+        margin-top: 40px;
+        font-size: 40px;
+        text-shadow: 2px 2px 4px #0005;
+    }
+
+    #countdown {
+        font-size: 48px;
+        margin-top: 20px;
+    }
+
+    /* Presente */
+    #gift {
+        width: 200px;
+        margin-top: 40px;
+        cursor: pointer;
+        display: none;
+    }
+
+    /* Animação Confetes */
+    canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+    }
+</style>
 </head>
 <body>
-    <h1>Bem-vindo ao meu site!</h1>
-    <p>Site criado com GitHub Pages.</p>
+
+<h1>Contagem para o Aniversário 🎉</h1>
+<div id="countdown">Carregando...</div>
+
+<img id="gift" src="https://i.imgur.com/EX9zQ4p.png">
+
+<canvas id="confetti"></canvas>
+
+<script>
+// ======= DATA DO ANIVERSÁRIO ======
+const targetDate = new Date("2025-02-10T00:00:00").getTime();
+// COLOCA A DATA AÍ EM CIMA ↑↑
+
+// ======= CONTAGEM REGRESSIVA ======
+const countdownEl = document.getElementById("countdown");
+const giftEl = document.getElementById("gift");
+
+const interval = setInterval(() => {
+    const now = Date.now();
+    const diff = targetDate - now;
+
+    if (diff <= 0) {
+        clearInterval(interval);
+        countdownEl.textContent = "🎁 SURPRESA!!! 🎉";
+        giftEl.style.display = "block";
+        startConfetti();
+        return;
+    }
+
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+
+    countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+}, 1000);
+
+
+// ======= CONFETTI ANIMATION ======
+const canvas = document.getElementById("confetti");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+
+let confetti = [];
+
+function startConfetti() {
+    for (let i = 0; i < 300; i++) {
+        confetti.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height - canvas.height,
+            r: Math.random() * 6 + 4,
+            d: Math.random() * 0.5 + 0.2
+        });
+    }
+    requestAnimationFrame(updateConfetti);
+}
+
+function updateConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    confetti.forEach((c) => {
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        ctx.fill();
+
+        c.y += c.d;
+        if (c.y > canvas.height) c.y = -10;
+    });
+
+    requestAnimationFrame(updateConfetti);
+}
+
+window.onresize = resizeCanvas;
+</script>
+
 </body>
 </html>
