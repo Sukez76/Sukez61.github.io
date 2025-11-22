@@ -1,21 +1,24 @@
 // Defina o tempo da contagem regressiva (em segundos)
-let countdownTime = 10 * 60; // exemplo: 10 minutos
+let countdownTime = 10 * 60;
 
 const countdownElement = document.getElementById('countdown');
 const tickSound = document.getElementById('tick-sound');
 
-// Criar o áudio de fundo
+// Criar áudio de fundo
 const backgroundMusic = new Audio('Glacier.mp3');
-backgroundMusic.loop = true;   // toca em loop
-backgroundMusic.volume = 0.5;  // volume de 0 a 1
+backgroundMusic.loop = true;
+backgroundMusic.volume = 0.5;
 
-// Tentar tocar a música quando a página carregar
-window.addEventListener('load', () => {
-    backgroundMusic.play().catch(() => {
-        console.log('Autoplay bloqueado pelo navegador. Interaja com a página para ouvir a música.');
-    });
+// Botão para iniciar música
+const startButton = document.getElementById('start-music');
+startButton.style.display = 'block'; // mostrar botão temporariamente
+
+startButton.addEventListener('click', () => {
+    backgroundMusic.play();
+    startButton.style.display = 'none'; // esconder o botão após tocar
 });
 
+// Funções da contagem regressiva
 function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -29,9 +32,8 @@ function updateCountdown() {
 
     countdownElement.textContent = formatTime(countdownTime);
 
-    // Tocar som de tick
     tickSound.currentTime = 0;
-    tickSound.play().catch(e => console.log('Som bloqueado pelo navegador até interação'));
+    tickSound.play().catch(e => console.log('Som bloqueado até interação'));
 
     countdownTime--;
 }
